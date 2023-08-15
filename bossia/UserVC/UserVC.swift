@@ -114,6 +114,11 @@ class UserVC: UIViewController, UITextFieldDelegate {
         }
     }
     
+    @IBAction func forgotPasswordButtonClicked(_ sender: Any) {
+        performSegue(withIdentifier: "toForgotVC", sender: nil)
+    }
+    
+    
     func makeAlert(titleInput: String, messageInput: String)
     {
         let alert = UIAlertController(title: title, message: messageInput, preferredStyle: .alert)
