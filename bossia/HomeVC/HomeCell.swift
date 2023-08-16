@@ -19,6 +19,7 @@ class HomeCell: UITableViewCell {
 
     var isLiked: Bool = false
     let fireStoreDatabase = Firestore.firestore()
+    var db = Firestore.firestore()
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -50,29 +51,50 @@ class HomeCell: UITableViewCell {
     
     @IBAction func likeButtonClicked(_ sender: Any)
     {
-        guard let documentId = documentIdLabel.text else {
+        guard let documentId = documentIdLabel.text else
+        {
                     return
                 }
                 
-                if isLiked {
-                    fireStoreDatabase.collection("Post").document(documentId).updateData(["like": FieldValue.increment(Int64(-1))])
+            let likeData: [String: Any] = [
+            "email": Auth.auth().currentUser!.email!,
+            "photoId": documentId,
+            "timestamp": FieldValue.serverTimestamp()
+            ]
+            
+            db.collection("Likes").addDocument(data: likeData) { error in
+                if let error = error
+                {
+                    print("Beğeni verisi eklenirken hata oluştu: \(error)")
                 } else {
+                    print("Beğeni verisi başarıyla eklendi")
+                }
+                }
+                if isLiked
+                {
+                    fireStoreDatabase.collection("Post").document(documentId).updateData(["like": FieldValue.increment(Int64(-1))])
+                } else
+                {
                     fireStoreDatabase.collection("Post").document(documentId).updateData(["like": FieldValue.increment(Int64(1))])
                 }
                 isLiked.toggle()
                 updateLikeButtonAppearance()
     }
-    func updateLikeButtonAppearance() {
-        if isLiked {
+    func updateLikeButtonAppearance()
+        {
+        if isLiked
+                {
             let notlikedImage = UIImage(systemName: "heart.fill")
             likeButton.setImage(notlikedImage, for: .normal)
             likeButton.tintColor = UIColor.systemYellow
-        } else {
+        } else
+            {
             let likedImage = UIImage(systemName: "heart")
             likeButton.setImage(likedImage, for: .normal)
             likeButton.tintColor = UIColor.systemYellow
         }
     }
+    
     
     
     
@@ -96,5 +118,4 @@ class HomeCell: UITableViewCell {
             }
         }
     }
-    
 }
