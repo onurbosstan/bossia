@@ -19,7 +19,7 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
     @IBOutlet weak var profilePhotoImageView: UIImageView!
     @IBOutlet weak var profileNameLabel: UILabel!
     
-    var menuOptions = ["Edit Profile", "Settings", "Log Out!"]
+    var menuOptions = ["Settings & Privacy", "Logout"]
     
     
     var following: Int = 0
@@ -51,18 +51,19 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.collectionViewLayout = UICollectionViewFlowLayout()
-        collectionView.collectionViewLayout = CollectionLayout(colmnsNumber: 3, minColmnsNumber: 10, minCell: 20)
+        collectionView.collectionViewLayout = CollectionLayout(colmnsNumber: 3, minColmnsNumber: 1, minCell: 1)
         
         
         getDataFromProfile()
         followUser(userID: currentUserID)
+        
+        
         
         //Karşısına güncel fotoğraf çıkması için;
         if let user = Auth.auth().currentUser
         {
             updateProfilePhoto()
         }
-        
         //PROFİL FOTOĞRAFI;
         profilePhotoImageView.isUserInteractionEnabled = true
         let gestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(chooseImage))
@@ -96,7 +97,7 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
         if let imageData = profilePhotoImageView.image?.jpegData(compressionQuality: 0.5) {
             let uploadTask = storageRef.putData(imageData, metadata: nil) { (metadata, error) in
                 if let error = error {
-                    self.makeAlert(titleInput: "Error!", messageInput: error.localizedDescription)
+                    print("Error!")
                 } else
                 {
                     self.updateProfilePhoto()
@@ -111,7 +112,7 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
         let storageRef = Storage.storage().reference().child("profilePhoto").child("\(userID).jpg")
         storageRef.getData(maxSize: 1 * 1024 * 1024) { (data, error) in
             if let error = error {
-                self.makeAlert(titleInput: "Error!", messageInput: error.localizedDescription)
+                print("Error!")
             } else {
                 if let data = data, let profileImage = UIImage(data: data) {
                     self.profilePhotoImageView.image = profileImage
@@ -129,8 +130,12 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
     //PROFILE MAIN
     func getDataFromProfile()
     {
+        guard let currentUserEmail = Auth.auth().currentUser?.email else {
+            return
+        }
+        
         let fireStoreDatabase = Firestore.firestore()
-        fireStoreDatabase.collection("Post").order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
+        fireStoreDatabase.collection("Post").whereField("email", isEqualTo: currentUserEmail).order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
             if error != nil
             {
                 self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
@@ -180,12 +185,7 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
         cell.collectionImageView.sd_setImage(with: URL(string: self.memberImageArray[indexPath.row]))
         return cell
     }
-    
-    
-    
-    
-    
-    
+
     
     
     //FOLLOW
@@ -201,7 +201,7 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
     }
     func followUser(userID: String)
     {
-        db.collection("users").document(currentUserID).getDocument { (documentSnapshot, error) in
+        db.collection("Members").document(currentUserID).getDocument { (documentSnapshot, error) in
             if let document = documentSnapshot, document.exists {
                 let userData = document.data()
                 let followerCount = userData?["followerCount"] as? Int ?? 0
@@ -211,16 +211,16 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
             }
         }
  
-        db.collection("users").document(currentUserID).updateData(["following":FieldValue.arrayUnion([userID])])
-        db.collection("users").document(userID).updateData(["followers":FieldValue.arrayUnion([currentUserID])])
+        db.collection("Members").document(currentUserID).updateData(["following":FieldValue.arrayUnion([userID])])
+        db.collection("Members").document(userID).updateData(["followers":FieldValue.arrayUnion([currentUserID])])
         isFollowing = true
         followingLabel.text = String(following + 1)
         updateFollowButtonTitle()
     }
     func unfollowUser(userID: String)
     {
-        db.collection("users").document(currentUserID).updateData(["following": FieldValue.arrayRemove([userID])])
-        db.collection("users").document(userID).updateData(["followers":FieldValue.arrayUnion([currentUserID])])
+        db.collection("Members").document(currentUserID).updateData(["following": FieldValue.arrayRemove([userID])])
+        db.collection("Members").document(userID).updateData(["followers":FieldValue.arrayUnion([currentUserID])])
         isFollowing = false
         followingLabel.text = String(following)
         updateFollowButtonTitle()
@@ -248,12 +248,9 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
     {
         switch option
         {
-            case "Edit Profile":
-            self.performSegue(withIdentifier: "toEditProfile", sender: nil)
-            case "Settings":
-                // Seçenek 2 seçildiğinde yapılacak işlemler burada
-                print("Seçenek 2 seçildi.")
-            case "Log Out!":
+            case "Settings & Privacy":
+            self.performSegue(withIdentifier: "toSettingsVC", sender: nil)
+            case "Logout":
             do
             {
                 try Auth.auth().signOut()
@@ -271,15 +268,15 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
     {
         // Açılır menüyü oluşturmak için UIAlertController kullanıyoruz.
                 let alertController = UIAlertController(title: "Menu", message: "Please select the action you want to take", preferredStyle: .actionSheet)
-                // Açılır menüde göstermek istediğiniz seçenekleri ekleyin.
+                // Açılır menüde göstermek istediğiniz seçenekleri ekliyoruz.
                 for option in menuOptions {
                     alertController.addAction(UIAlertAction(title: option, style: .default, handler: { (_) in
                         self.handleMenuSelection(option: option)
                     }))
                 }
-                // Açılır menüyü iptal etme seçeneği ekleyin.
+                // Açılır menüyü iptal etme seçeneği ekliyoruz.
                 alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-                // Açılır menüyü ekranda gösterin.
+                // Açılır menüyü ekranda gösteriyoruz.
                 present(alertController, animated: true, completion: nil)
     }
     
@@ -288,7 +285,7 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
     func makeAlert(titleInput: String, messageInput: String)
     {
         let alert = UIAlertController(title: title, message: messageInput, preferredStyle: .alert)
-        let okButton = UIAlertAction(title: "YES", style: .default)
+        let okButton = UIAlertAction(title: "OK", style: .default)
         alert.addAction(okButton)
         self.present(alert, animated: true)
     }

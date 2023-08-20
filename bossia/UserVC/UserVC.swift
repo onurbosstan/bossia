@@ -12,8 +12,6 @@ class UserVC: UIViewController, UITextFieldDelegate {
     
     @IBOutlet weak var emailText: UITextField!
     @IBOutlet weak var passwordText: UITextField!
-    @IBOutlet weak var buttonShowPass: UIButton!
-    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,99 +19,85 @@ class UserVC: UIViewController, UITextFieldDelegate {
         emailText.delegate = self
         passwordText.delegate = self
         
-        let fireStoreDB = Firestore.firestore()
-        fireStoreDB.collection("User").whereField("mail", isEqualTo: emailText.text!).getDocuments { (snapshot, error) in
-            if error != nil
-            {
-                self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
-            } else
-            {
-                for document in snapshot!.documents
-                {
-                    let mail = document.get("mail")
-                    print(mail!)
-                    self.performSegue(withIdentifier: "toHomeVC", sender: nil)
-                }
-            }
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        view.addGestureRecognizer(tapGestureRecognizer)
+        
+        let currentUser = Auth.auth().currentUser
+        if currentUser != nil
+        {
+            self.performSegue(withIdentifier: "toHomeVC", sender: nil)
         }
     }
     
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+    @objc func handleTap()
+    {
+        view.endEditing(true)
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool
+    {
         emailText.resignFirstResponder()
         passwordText.resignFirstResponder()
         return true
     }
-    func textFieldDidBeginEditing(_ textField: UITextField) {
+    func textFieldDidBeginEditing(_ textField: UITextField)
+    {
         
     }
     
     
     @IBAction func logInClicked(_ sender: Any) {
+        
         if emailText.text != "" && passwordText.text != ""
         {
-            Auth.auth().signIn(withEmail: emailText.text!, password: passwordText.text!) { (authdata, error) in
-                if error != nil
-                {
-                    self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error")
-                }else
-                {
-                    
-                    self.performSegue(withIdentifier: "toHomeVC", sender: nil)
+                Auth.auth().signIn(withEmail: emailText.text!, password: passwordText.text!) { (authdata, error) in
+                    if error != nil
+                    {
+                        self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error")
+                    } else
+                    {
+                        self.performSegue(withIdentifier: "toHomeVC", sender: nil)
+                    }
                 }
-            }
-        }else
+            } else
         {
-            makeAlert(titleInput: "Error!", messageInput: "Username/Password?")
-        }
-        
+                makeAlert(titleInput: "Error!", messageInput: "Username/Password?")
+            }
     }
     
     @IBAction func signUpClicked(_ sender: Any) {
         
         if emailText.text != "" && passwordText.text != ""
         {
-            Auth.auth().createUser(withEmail: emailText.text!, password: passwordText.text!) { (authdata, error) in
-                if error != nil
-                {
-                    self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error")
-                } else
-                {
-                    let fireStoreDB = Firestore.firestore()
-                    let fireStoreUser = ["mail" : Auth.auth().currentUser!.email!, "password": self.passwordText.text!] as? [String : Any]
-                    fireStoreDB.collection("User").addDocument(data: fireStoreUser!) { (error) in
-                        if error != nil
+                Auth.auth().createUser(withEmail: emailText.text!, password: passwordText.text!) { (authdata, error) in
+                    if error != nil
+                    {
+                        self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error")
+                    } else
+                    {
+                        let fireStoreDB = Firestore.firestore()
+                        if let currentUser = Auth.auth().currentUser
                         {
-                            self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
-                        } else
-                        {
-                            self.makeAlert(titleInput: "Success!", messageInput: "Success!")
+                            let fireStoreUser = ["mail": currentUser.email!, "password": self.passwordText.text!]
+                            fireStoreDB.collection("Members").document(currentUser.email!).setData(fireStoreUser) { error in
+                                if let error = error
+                                {
+                                    self.makeAlert(titleInput: "Error!", messageInput: error.localizedDescription)
+                                } else
+                                {
+                                    self.makeAlert(titleInput: "Success!", messageInput: "Registered")
+                                    self.performSegue(withIdentifier: "toHomeVC", sender: nil)
+                                }
+                            }
                         }
                     }
-                    
-                    self.makeAlert(titleInput: "Successful", messageInput: "Registered")
-                    self.performSegue(withIdentifier: "toHomeVC", sender: nil)
                 }
+            } else
+        {
+                makeAlert(titleInput: "Error!", messageInput: "Username/Password?")
             }
-        } else
-        {
-            makeAlert(titleInput: "Error!", messageInput: "Username/Password?")
-        }
+    }
 
-    }
-    
-    @IBAction func actionShow(_ sender: Any)
-    {
-        if buttonShowPass.titleLabel?.text == "Show"
-        {
-            buttonShowPass.setTitle("Hide", for: .normal)
-            passwordText.isSecureTextEntry = true
-        }else
-        {
-            buttonShowPass.setTitle("Show", for: .normal)
-            passwordText.isSecureTextEntry = false
-        }
-    }
-    
     @IBAction func forgotPasswordButtonClicked(_ sender: Any) {
         performSegue(withIdentifier: "toForgotVC", sender: nil)
     }

@@ -16,10 +16,7 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var homeImageView: UIImageView!
     
-    
     let imagePicker = UIImagePickerController()
-    
-    
     
     var userEmailArray = [String]()
     var userCommentArray = [String]()
@@ -29,7 +26,6 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         
         homeImageView.layer.borderWidth = 2.0
         homeImageView.layer.borderColor = UIColor.systemYellow.cgColor
@@ -44,12 +40,19 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
             updateProfilePhoto()
         }
         
+        if let member = Auth.auth().currentUser
+        {
             getDataFromFirestore()
+        }
     }
     func getDataFromFirestore()
     {
+        guard let currentUserID = Auth.auth().currentUser?.email else {
+            return
+        }
+        
         let fireStoreDatabase = Firestore.firestore()
-        fireStoreDatabase.collection("Post").order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
+        fireStoreDatabase.collection("Post").whereField("email", isEqualTo: currentUserID).order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
             if error != nil
             {
                 self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
@@ -111,38 +114,32 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
         performSegue(withIdentifier: "toLikedVC", sender: nil)
     }
     
+
     
-    @IBAction func openCameraButton(_ sender: Any) {
-        
-        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    imagePicker.sourceType = .camera
-                    imagePicker.allowsEditing = false
-                    present(imagePicker, animated: true, completion: nil)
-                    
-                } else {
-                    print("Kamera kullanılamıyor.")
-                }
-    }
-        
-    
-    
-    
-    
-    
-    func updateProfilePhoto() {
-        guard let userID = Auth.auth().currentUser?.email else {
+    func updateProfilePhoto()
+    {
+        guard let userID = Auth.auth().currentUser?.email else
+        {
             return
         }
         let storageRef = Storage.storage().reference().child("profilePhoto").child("\(userID).jpg")
         storageRef.getData(maxSize: 1 * 1024 * 1024) { (data, error) in
-            if let error = error {
-                self.makeAlert(titleInput: "Error!", messageInput: error.localizedDescription)
+            if let error = error
+            {
+                print("Error!")
             } else {
-                if let data = data, let profileImage = UIImage(data: data) {
+                if let data = data, let profileImage = UIImage(data: data)
+                {
                     self.homeImageView.image = profileImage
                 }
             }
         }
+    }
+    
+    
+    
+    @IBAction func searchButtonClicked(_ sender: Any) {
+        performSegue(withIdentifier: "toSearchVC", sender: nil)
     }
     
     
@@ -154,3 +151,4 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
         self.present(alert, animated: true)
     }
 }
+
