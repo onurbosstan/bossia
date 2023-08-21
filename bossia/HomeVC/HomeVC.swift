@@ -45,51 +45,43 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
             getDataFromFirestore()
         }
     }
-    func getDataFromFirestore()
-    {
-        guard let currentUserID = Auth.auth().currentUser?.email else {
+    
+    func getDataFromFirestore() {
+        guard let currentUserID = Auth.auth().currentUser?.email! else {
             return
         }
         
         let fireStoreDatabase = Firestore.firestore()
-        fireStoreDatabase.collection("Post").whereField("email", isEqualTo: currentUserID).order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
-            if error != nil
-            {
+        fireStoreDatabase.collection("Members").document(currentUserID).collection("Posts").order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
+            if error != nil {
                 self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
-            } else
-            {
-                if snapshot?.isEmpty != true && snapshot != nil
-                {
-                    self.userEmailArray.removeAll(keepingCapacity: false)
-                    self.userImageArray.removeAll(keepingCapacity: false)
-                    self.userCommentArray.removeAll(keepingCapacity: false)
-                    self.likeArray.removeAll(keepingCapacity: false)
-                    self.documentIdArray.removeAll(keepingCapacity: false)
-        
-                    for document in snapshot!.documents
-                    {
+            } else {
+                if let snapshot = snapshot {
+                    self.userEmailArray.removeAll()
+                    self.userImageArray.removeAll()
+                    self.userCommentArray.removeAll()
+                    self.likeArray.removeAll()
+                    self.documentIdArray.removeAll()
+
+                    for document in snapshot.documents {
                         let documentID = document.documentID
                         self.documentIdArray.append(documentID)
                         
-                        if let userEmail = document.get("email") as? String
-                        {
+                        if let userEmail = document.get("email") as? String {
                             self.userEmailArray.append(userEmail)
                         }
-                        if let userComment = document.get("comment") as? String
-                        {
+                        if let userComment = document.get("comment") as? String {
                             self.userCommentArray.append(userComment)
                         }
-                        if let userLikes = document.get("like") as? Int
-                        {
+                        if let userLikes = document.get("like") as? Int {
                             self.likeArray.append(userLikes)
                         }
-                        if let userImage = document.get("imageurl") as? String
-                        {
+                        if let userImage = document.get("imageurl") as? String {
                             self.userImageArray.append(userImage)
                         }
                     }
+                    self.tableView.reloadData()
                 }
-                self.tableView.reloadData()
             }
         }
     }
@@ -135,14 +127,9 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
             }
         }
     }
-    
-    
-    
     @IBAction func searchButtonClicked(_ sender: Any) {
         performSegue(withIdentifier: "toSearchVC", sender: nil)
     }
-    
-    
     func makeAlert(titleInput: String, messageInput: String)
     {
         let alert = UIAlertController(title: title, message: messageInput, preferredStyle: .alert)

@@ -21,7 +21,6 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
     
     var menuOptions = ["Settings & Privacy", "Logout"]
     
-    
     var following: Int = 0
     var followers: Int = 0
     var postLab: Int = 0
@@ -64,6 +63,7 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
         {
             updateProfilePhoto()
         }
+        
         //PROFİL FOTOĞRAFI;
         profilePhotoImageView.isUserInteractionEnabled = true
         let gestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(chooseImage))
@@ -120,55 +120,42 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
             }
         }
     }
-    
-    
-    
-    
-    
-    
-    
+
     //PROFILE MAIN
-    func getDataFromProfile()
-    {
-        guard let currentUserEmail = Auth.auth().currentUser?.email else {
+    func getDataFromProfile() {
+        guard let currentUserID = Auth.auth().currentUser?.email! else {
             return
         }
         
         let fireStoreDatabase = Firestore.firestore()
-        fireStoreDatabase.collection("Post").whereField("email", isEqualTo: currentUserEmail).order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
-            if error != nil
-            {
+        fireStoreDatabase.collection("Members").document(currentUserID).collection("Posts").order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
+            if error != nil {
                 self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
-            } else
-            {
-                if snapshot?.isEmpty != true && snapshot != nil
+            } else {
+                if let snapshot = snapshot
                 {
-                    
-                    self.memberEmailArray.removeAll(keepingCapacity: false)
-                    self.memberImageArray.removeAll(keepingCapacity: false)
-                    
-                    for document in snapshot!.documents
+                    self.memberEmailArray.removeAll()
+                    self.memberImageArray.removeAll()
+
+                    for document in snapshot.documents
                     {
                         let documentID = document.documentID
                         self.memberDocumentArray.append(documentID)
                         
-                        if let memberEmail = document.get("email") as? String
+                        if let userEmail = document.get("email") as? String
                         {
-                            self.memberEmailArray.append(memberEmail)
+                            self.memberEmailArray.append(userEmail)
                         }
-                        if let memberImage = document.get("imageurl") as? String
+                        if let userImage = document.get("imageurl") as? String
                         {
-                            self.memberImageArray.append(memberImage)
+                            self.memberImageArray.append(userImage)
                             self.reloadPage()
                         }
                     }
-                    
                 }
             }
         }
     }
-    
-    
     private func reloadPage()
     {
         self.collectionView.reloadData()
@@ -279,8 +266,6 @@ class ProfileVC: UIViewController, UICollectionViewDelegate, UICollectionViewDat
                 // Açılır menüyü ekranda gösteriyoruz.
                 present(alertController, animated: true, completion: nil)
     }
-    
-    
     //GENEL UYARI MESAJLARI
     func makeAlert(titleInput: String, messageInput: String)
     {
