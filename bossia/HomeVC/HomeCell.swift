@@ -16,14 +16,14 @@ class HomeCell: UITableViewCell {
     @IBOutlet weak var likeLabel: UILabel!
     @IBOutlet weak var documentIdLabel: UILabel!
     @IBOutlet weak var likeButton: UIButton!
-
+    
     var isLiked: Bool = false
     let fireStoreDatabase = Firestore.firestore()
     var db = Firestore.firestore()
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        // Initialization code
+        checkCurrentUserLikeStatus()
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {
@@ -33,14 +33,16 @@ class HomeCell: UITableViewCell {
     
     func checkCurrentUserLikeStatus() {
         guard let userId = Auth.auth().currentUser?.email,
-              let documentId = documentIdLabel.text else {
+              let documentId = documentIdLabel.text else
+        {
             return
         }
         
-        let likesRef = fireStoreDatabase.collection("Post").document(documentId).collection("like").document(userId)
+        let likesRef = fireStoreDatabase.collection("Posts").document(documentId).collection("like").document(userId)
         
         likesRef.getDocument { (document, error) in
-            if let document = document, document.exists {
+            if let document = document, document.exists
+            {
                 self.isLiked = true
             } else {
                 self.isLiked = false
@@ -51,35 +53,44 @@ class HomeCell: UITableViewCell {
     
     @IBAction func likeButtonClicked(_ sender: Any)
     {
-        guard let documentId = documentIdLabel.text else
-        {
+        guard let documentId = documentIdLabel.text else {
                     return
                 }
-                
-            let likeData: [String: Any] = [
-            "email": Auth.auth().currentUser!.email!,
-            "photoId": documentId,
-            "timestamp": FieldValue.serverTimestamp()
-            ]
-            
-            db.collection("Likes").addDocument(data: likeData) { error in
-                if let error = error
-                {
-                    print("Beğeni verisi eklenirken hata oluştu: \(error)")
-                } else {
-                    print("Beğeni verisi başarıyla eklendi")
+
+                let likeData: [String: Any] = [
+                    "email": Auth.auth().currentUser!.email!,
+                    "photoId": documentId,
+                    "timestamp": FieldValue.serverTimestamp()
+                ]
+
+                db.collection("Likes").addDocument(data: likeData) { error in
+                    if let error = error {
+                        print("Error adding like data: \(error)")
+                    } else {
+                        print("Like data added successfully")
+                    }
                 }
-                }
-                if isLiked
-                {
-                    fireStoreDatabase.collection("Post").document(documentId).updateData(["like": FieldValue.increment(Int64(-1))])
-                } else
-                {
-                    fireStoreDatabase.collection("Post").document(documentId).updateData(["like": FieldValue.increment(Int64(1))])
-                }
+
+                let incrementValue = isLiked ? 1 : -1
+                db.collection("Posts").document(documentId).updateData(["like": FieldValue.increment(Int64(incrementValue))])
+
                 isLiked.toggle()
                 updateLikeButtonAppearance()
+
+                updateLikeLabel(increase: !isLiked, decrease: isLiked)
     }
+    func updateLikeLabel(increase: Bool = false, decrease: Bool = false) {
+            var currentLikeCount = Int(likeLabel.text ?? "0") ?? 0
+
+            if increase {
+                currentLikeCount -= 1
+            }
+            if decrease {
+                currentLikeCount += 1
+            }
+
+            likeLabel.text = String(currentLikeCount)
+        }
     func updateLikeButtonAppearance()
         {
         if isLiked
@@ -94,28 +105,5 @@ class HomeCell: UITableViewCell {
             likeButton.tintColor = UIColor.systemYellow
         }
     }
-    
-    
-    
-    
-    
-    @IBAction func deleteButtonClicked(_ sender: Any) {
-        let postIdToDelete = Auth.auth().currentUser!.email!
-        deletePost(postId: postIdToDelete)
-        
-    }
-    func deletePost(postId: String)
-    {
-        let fireStoreDatabase = Firestore.firestore()
-        fireStoreDatabase.collection("Post").document(documentIdLabel.text!).delete { (error) in
-            if error != nil
-            {
-                let alert = UIAlertController(title: "Error!", message: error?.localizedDescription ?? "Error!", preferredStyle: .alert)
-                let okButton = UIAlertAction(title: "Error!", style: .default)
-                alert.addAction(okButton)
-            } else {
-                print("Success!")
-            }
-        }
-    }
+
 }

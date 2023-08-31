@@ -9,8 +9,6 @@ import UIKit
 import Firebase
 import SDWebImage
 
-
-
 class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     @IBOutlet weak var tableView: UITableView!
@@ -45,38 +43,47 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
             getDataFromFirestore()
         }
     }
-    
-    func getDataFromFirestore() {
-        guard let currentUserID = Auth.auth().currentUser?.email! else {
+
+    func getDataFromFirestore()
+    {
+        guard let currentUserID = Auth.auth().currentUser?.email! else
+        {
             return
         }
-        
         let fireStoreDatabase = Firestore.firestore()
         fireStoreDatabase.collection("Members").document(currentUserID).collection("Posts").order(by: "date", descending: true).addSnapshotListener { (snapshot, error) in
-            if error != nil {
+            if error != nil
+            {
                 self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
-            } else {
-                if let snapshot = snapshot {
+            } else
+            {
+                if let snapshot = snapshot
+                {
                     self.userEmailArray.removeAll()
                     self.userImageArray.removeAll()
                     self.userCommentArray.removeAll()
                     self.likeArray.removeAll()
                     self.documentIdArray.removeAll()
 
-                    for document in snapshot.documents {
+                    for document in snapshot.documents
+                    {
                         let documentID = document.documentID
                         self.documentIdArray.append(documentID)
                         
-                        if let userEmail = document.get("email") as? String {
+                        if let userEmail = document.get("email") as? String
+                        {
                             self.userEmailArray.append(userEmail)
                         }
-                        if let userComment = document.get("comment") as? String {
+                        if let userComment = document.get("comment") as? String
+                        {
                             self.userCommentArray.append(userComment)
                         }
-                        if let userLikes = document.get("like") as? Int {
+                        if let userLikes = document.get("like") as? Int
+                        {
                             self.likeArray.append(userLikes)
                         }
-                        if let userImage = document.get("imageurl") as? String {
+                        if let userImage = document.get("imageurl") as? String
+                        {
                             self.userImageArray.append(userImage)
                         }
                     }
@@ -98,16 +105,28 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
         cell.postImageView.sd_setImage(with: URL(string: self.userImageArray[indexPath.row]))
         cell.likeLabel.text = String(likeArray[indexPath.row])
         cell.documentIdLabel.text = documentIdArray[indexPath.row]
+        
+        let documentId = documentIdArray[indexPath.row]
+                let likesRef = Firestore.firestore().collection("Posts").document(documentId).collection("like").document(Auth.auth().currentUser!.email!)
+                
+                likesRef.getDocument { (document, error) in
+                    if let document = document, document.exists {
+                        cell.isLiked = true
+                    } else {
+                        cell.isLiked = false
+                    }
+                    cell.updateLikeButtonAppearance()
+                }
         return cell
     }
     
+    //Beğenenler
     @IBAction func usersLiked(_ sender: Any)
     {
         performSegue(withIdentifier: "toLikedVC", sender: nil)
     }
-    
 
-    
+    //Profil Fotoğrafı
     func updateProfilePhoto()
     {
         guard let userID = Auth.auth().currentUser?.email else
@@ -119,7 +138,8 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
             if let error = error
             {
                 print("Error!")
-            } else {
+            } else
+            {
                 if let data = data, let profileImage = UIImage(data: data)
                 {
                     self.homeImageView.image = profileImage
@@ -127,6 +147,7 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
             }
         }
     }
+
     @IBAction func searchButtonClicked(_ sender: Any) {
         performSegue(withIdentifier: "toSearchVC", sender: nil)
     }
