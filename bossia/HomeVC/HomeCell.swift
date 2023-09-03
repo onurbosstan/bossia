@@ -21,6 +21,8 @@ class HomeCell: UITableViewCell {
     let fireStoreDatabase = Firestore.firestore()
     var db = Firestore.firestore()
     
+    let currentUserIDS = Auth.auth().currentUser!.email!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         checkCurrentUserLikeStatus()
@@ -106,4 +108,44 @@ class HomeCell: UITableViewCell {
         }
     }
 
+
+    @IBAction func deleteButtonClicked(_ sender: Any) {
+        let alertController = UIAlertController(title: "Delete Post", message: "Are you sure you want to delete the post?", preferredStyle: .alert)
+                let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { (action) in
+                    self.confirmDelete()
+                }
+                let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+                alertController.addAction(deleteAction)
+                alertController.addAction(cancelAction)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+            let viewController = windowScene.windows.first?.rootViewController {
+            viewController.present(alertController, animated: true, completion: nil)
+        }
+    }
+    func confirmDelete()
+    {
+        guard let documentId = documentIdLabel.text else {
+            return
+        }
+        db.collection("Members").document(currentUserIDS).collection("Posts").document(documentId).delete { error in
+            if let error = error
+            {
+                print("Error deleting post: \(error)")
+            } else
+            {
+                print("Post successfully deleted")
+                let photoStorageRef = Storage.storage().reference().child("media").child("\(documentId).jpg")
+                photoStorageRef.delete { error in
+                    if let error = error
+                    {
+                        print("Error deleting photo: \(error)")
+                    } else
+                    {
+                        print("Photo deleted successfully")
+                    }
+                }
+                NotificationCenter.default.post(name: Notification.Name("PostDeleted"), object: nil)
+            }
+        }
+    }
 }

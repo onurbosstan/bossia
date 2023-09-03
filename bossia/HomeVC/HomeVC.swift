@@ -42,6 +42,10 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
         {
             getDataFromFirestore()
         }
+        NotificationCenter.default.addObserver(self, selector: #selector(postDeleted), name: NSNotification.Name("PostDeleted"), object: nil)
+    }
+    @objc func postDeleted() {
+        getDataFromFirestore()
     }
 
     func getDataFromFirestore()
@@ -126,6 +130,7 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
         performSegue(withIdentifier: "toLikedVC", sender: nil)
     }
 
+    
     //Profil Fotoğrafı
     func updateProfilePhoto()
     {
@@ -146,8 +151,8 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
                 }
             }
         }
-    }
-
+    }    
+    
     @IBAction func searchButtonClicked(_ sender: Any) {
         performSegue(withIdentifier: "toSearchVC", sender: nil)
     }
