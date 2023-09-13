@@ -9,7 +9,7 @@ import UIKit
 import Firebase
 import SDWebImage
 
-class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITabBarControllerDelegate {
 
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var homeImageView: UIImageView!
@@ -24,6 +24,8 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        self.tabBarController?.delegate = self
         
         homeImageView.layer.borderWidth = 2.0
         homeImageView.layer.borderColor = UIColor.systemYellow.cgColor
@@ -151,7 +153,17 @@ class HomeVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
                 }
             }
         }
-    }    
+    }
+    
+    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        if viewController is HomeVC {
+            scrollToTop()
+        }
+    }
+    func scrollToTop() {
+        let indexPath = IndexPath(row: 0, section: 0)
+        self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
+    }
     
     @IBAction func searchButtonClicked(_ sender: Any) {
         performSegue(withIdentifier: "toSearchVC", sender: nil)
