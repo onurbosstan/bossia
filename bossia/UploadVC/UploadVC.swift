@@ -18,7 +18,6 @@ class UploadVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap))
         view.addGestureRecognizer(tapGestureRecognizer)
         
@@ -32,18 +31,23 @@ class UploadVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         let pickerController = UIImagePickerController()
         pickerController.delegate = self
         pickerController.sourceType = .photoLibrary
+        pickerController.allowsEditing = true
         present(pickerController, animated: true)
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        
-        if let selectedImage = info[.originalImage] as? UIImage {
-                imageView.image = selectedImage
-            }
-            dismiss(animated: true, completion: nil)
+        if let editedImage = info[.editedImage] as? UIImage 
+        {
+               imageView.image = editedImage
+           } else if let originalImage = info[.originalImage] as? UIImage 
+        {
+               imageView.image = originalImage
+           }
+           dismiss(animated: true, completion: nil)
     }
     
-    @objc func handleTap() {
+    @objc func handleTap() 
+    {
         view.endEditing(true)
     }
     
@@ -97,6 +101,7 @@ class UploadVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         if UIImagePickerController.isSourceTypeAvailable(.camera)
         {
                     imagePicker.sourceType = .camera
+                    imagePicker.allowsEditing = true
                     imagePicker.allowsEditing = false
                     imagePicker.delegate = self
                     present(imagePicker, animated: true, completion: nil)
