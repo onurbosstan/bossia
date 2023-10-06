@@ -10,6 +10,9 @@ import Firebase
 
 class UserVC: UIViewController, UITextFieldDelegate {
     
+    @IBOutlet weak var thumbleImageView: UIImageView!
+    @IBOutlet weak var logInButton: UIButton!
+    @IBOutlet weak var registerButton: UIButton!
     @IBOutlet weak var emailText: UITextField!
     @IBOutlet weak var passwordText: UITextField!
 
@@ -27,6 +30,12 @@ class UserVC: UIViewController, UITextFieldDelegate {
         {
             self.performSegue(withIdentifier: "toHomeVC", sender: nil)
         }
+        
+        self.logInButton.layer.cornerRadius = 8
+        self.registerButton.layer.cornerRadius = 8
+        self.thumbleImageView.layer.borderColor = UIColor.clear.cgColor
+        self.thumbleImageView.layer.borderWidth = 1
+        self.thumbleImageView.layer.cornerRadius = 16
     }
     
     @objc func handleTap()
