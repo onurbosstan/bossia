@@ -13,7 +13,8 @@ class CollectionLayout: UICollectionViewFlowLayout {
     var heightRatio : CGFloat = (1.0 / 1.0)
     
     //minColmnsNumber = MinimumSutünAralığı , minCell = minimumSatıraralığı
-    init(colmnsNumber : Int, minColmnsNumber : CGFloat = 0, minCell : CGFloat = 0) {
+    init(colmnsNumber : Int, minColmnsNumber : CGFloat = 0, minCell : CGFloat = 0)
+    {
         self.colmnsNumber = colmnsNumber
         super.init()
         
@@ -36,5 +37,6 @@ class CollectionLayout: UICollectionViewFlowLayout {
         let height = width * heightRatio
         
         itemSize = CGSize(width: width, height: height)
+        
     }
 }
