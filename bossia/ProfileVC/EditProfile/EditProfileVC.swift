@@ -13,8 +13,6 @@ class EditProfileVC: UIViewController, UIImagePickerControllerDelegate, UINaviga
     @IBOutlet weak var editProfileImageView: UIImageView!
     @IBOutlet weak var userNameLabel: UILabel!
     @IBOutlet weak var nameText: UITextField!
-    @IBOutlet weak var genderSegment: UISegmentedControl!
-    
     
     var currentUser = Auth.auth().currentUser
     
@@ -28,7 +26,8 @@ class EditProfileVC: UIViewController, UIImagePickerControllerDelegate, UINaviga
         self.userNameLabel.text = "\(Auth.auth().currentUser!.email!)"
         
         //EditProfil kısmındaki değişen Name: bölümünün karşımıza çıkabilmesi için;
-        if let userNames = Auth.auth().currentUser {
+        if let userNames = Auth.auth().currentUser
+        {
             currentUser = userNames
             nameText.text = currentUser?.displayName
         }
@@ -68,10 +67,12 @@ class EditProfileVC: UIViewController, UIImagePickerControllerDelegate, UINaviga
             return
         }
         let storageRef = Storage.storage().reference().child("profilePhoto").child("\(userID).jpg")
-        if let imageData = editProfileImageView.image?.jpegData(compressionQuality: 0.5) {
+        if let imageData = editProfileImageView.image?.jpegData(compressionQuality: 0.5)
+        {
             let uploadTask = storageRef.putData(imageData, metadata: nil) { (metadata, error) in
-                if let error = error {
-                    self.makeAlert(titleInput: "Error!", messageInput: error.localizedDescription)
+                if let error = error
+                {
+                    print("Error!")
                 } else
                 {
                     self.updateProfilePhoto()
@@ -79,15 +80,19 @@ class EditProfileVC: UIViewController, UIImagePickerControllerDelegate, UINaviga
             }
         }
     }
-    func updateProfilePhoto() {
-        guard let userID = Auth.auth().currentUser?.email else {
+    func updateProfilePhoto()
+    {
+        guard let userID = Auth.auth().currentUser?.email else
+        {
             return
         }
         let storageRef = Storage.storage().reference().child("profilePhoto").child("\(userID).jpg")
         storageRef.getData(maxSize: 1 * 1024 * 1024) { (data, error) in
-            if let error = error {
-                self.makeAlert(titleInput: "Error!", messageInput: error.localizedDescription)
-            } else {
+            if let error = error
+            {
+                print("Error!")
+            } else
+            {
                 if let data = data, let profileImage = UIImage(data: data) {
                     self.editProfileImageView.image = profileImage
                 }
@@ -98,20 +103,23 @@ class EditProfileVC: UIViewController, UIImagePickerControllerDelegate, UINaviga
     
     
     @IBAction func finishedButtonClicked(_ sender: UIButton) {
-        guard let newUsername = nameText.text else {
+        guard let newUsername = nameText.text else
+        {
                     return
                 }
-                // Firebase üzerinde kullanıcının verilerini güncelle
                 let changeRequest = Auth.auth().currentUser?.createProfileChangeRequest()
                 changeRequest?.displayName = newUsername
                 changeRequest?.commitChanges(completion: { error in
-                    if let error = error {
+                    if let error = error
+                    {
                         self.makeAlert(titleInput: "Error!", messageInput: error.localizedDescription)
-                    } else {
+                    } else
+                    {
                         let fireStoreDatabase = Firestore.firestore()
                         let firestorePost = ["userName": self.nameText.text!] as [String : Any]
                         fireStoreDatabase.collection("Users").addDocument(data: firestorePost) { (error) in
-                            if error != nil {
+                            if error != nil
+                            {
                                 self.makeAlert(titleInput: "Error!", messageInput: error?.localizedDescription ?? "Error!")
                             } else
                             {
@@ -135,7 +143,7 @@ class EditProfileVC: UIViewController, UIImagePickerControllerDelegate, UINaviga
     func makeAlert(titleInput: String, messageInput: String)
     {
         let alert = UIAlertController(title: title, message: messageInput, preferredStyle: .alert)
-        let okButton = UIAlertAction(title: "YES", style: .default)
+        let okButton = UIAlertAction(title: "OK", style: .default)
         alert.addAction(okButton)
         self.present(alert, animated: true)
     }
